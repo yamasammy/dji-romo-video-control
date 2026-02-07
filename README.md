@@ -2,7 +2,7 @@
 
 Live video streaming and remote control for DJI Romo robot vacuums, directly from your browser.
 
-Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a PS5 DualSense controller via WebHID.
+Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a PS5 DualSense / Xbox controller via WebHID.
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -12,7 +12,8 @@ Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a
 - **Keyboard control** (ZQSD/WASD + arrow keys)
 - **On-screen joystick** with mouse/touch support
 - **PS5 DualSense gamepad** via WebHID (works on macOS where the standard Gamepad API doesn't detect DualSense over Bluetooth)
-- **Go Home** command (Triangle button on DualSense)
+- **Xbox controller** (One S, Series X|S) via WebHID
+- **Go Home** command (Triangle on DualSense / Y on Xbox)
 - Low-latency control via Agora DataStream at 10Hz
 
 ## Prerequisites
@@ -64,7 +65,7 @@ Your browser will open automatically at `http://127.0.0.1:8765/` with the video 
 1. Click **Enable Control** to activate remote control mode
 2. Use **keyboard** (Z/W = Forward, Q/A = Rotate Left, D/E = Rotate Right, S = U-Turn, Space = Stop)
 3. Or click the **on-screen buttons**
-4. For **PS5 DualSense**: click "Gamepad: OFF", select your controller in the Chrome popup, then use the left stick
+4. For **gamepad**: click "Gamepad: OFF", select your controller in the Chrome popup, then use the left stick
 
 ### DualSense mapping
 
@@ -78,10 +79,22 @@ Your browser will open automatically at `http://127.0.0.1:8765/` with the video 
 | Triangle button | Go Home (return to dock) |
 | Release stick | Stop |
 
+### Xbox controller mapping
+
+| Input | Action |
+|-------|--------|
+| Left stick up | Forward |
+| Left stick left | Rotate left |
+| Left stick right | Rotate right |
+| Left stick down | Disabled (safety) |
+| A button | U-Turn |
+| Y button | Go Home (return to dock) |
+| Release stick | Stop |
+
 ## How it works
 
 ```
-PS5 DualSense (Bluetooth)
+Gamepad (DualSense / Xbox, Bluetooth or USB)
     → Browser WebHID API
     → JS input handler
     → HTTP POST to Python backend (127.0.0.1:8765)
@@ -102,6 +115,7 @@ Where `mode` encodes the direction: 16=U-Turn, 17=Forward, 18=Rotate Left, 19=Ro
 - The Agora token is valid for ~24 hours after generation
 - Only one active stream session per device is allowed by DJI's API
 - The standard browser Gamepad API does not detect DualSense on macOS via Bluetooth — this project uses WebHID as a workaround
+- Supported Xbox controllers: Xbox One S (Model 1708), Xbox Series X|S, Xbox Elite Series 2
 - Chrome is required for WebHID support (served from localhost for secure context)
 
 ## Related projects

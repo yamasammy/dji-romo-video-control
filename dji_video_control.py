@@ -3,7 +3,7 @@
 DJI Romo - Video Stream & Robot Control
 
 Standalone script for live video + joystick/gamepad control of DJI Romo robot vacuum.
-Controls: keyboard (ZQSD/arrows), on-screen buttons, PS5 DualSense (WebHID).
+Controls: keyboard (ZQSD/arrows), on-screen buttons, PS5 DualSense or Xbox controller (WebHID).
 
 Usage:
     python3 dji_video_control.py
@@ -857,11 +857,12 @@ class DJIVideoController:
             }});
         }}
 
-        // --- PS5 DualSense support via WebHID API ---
+        // --- Gamepad support via WebHID API (DualSense + Xbox) ---
         let hidDevice = null;
+        let controllerType = null;
         let lastGamepadDir = 'none';
-        let lastBtnCross = false;
-        let lastBtnTriangle = false;
+        let lastBtnAction1 = false;
+        let lastBtnAction2 = false;
 
         async function toggleGamepad() {{
             const btn = document.getElementById('btn-gamepad');
@@ -886,12 +887,16 @@ class DJIVideoController:
             try {{
                 log('Selecting gamepad...');
                 const devices = await navigator.hid.requestDevice({{
-                    filters: [{{
-                        vendorId: 0x054C,
-                        productId: 0x0CE6,
-                        usagePage: 0x0001,
-                        usage: 0x0005
-                    }}]
+                    filters: [
+                        {{ vendorId: 0x054C, productId: 0x0CE6, usagePage: 0x0001, usage: 0x0005 }},
+                        {{ vendorId: 0x054C, productId: 0x0DF2, usagePage: 0x0001, usage: 0x0005 }},
+                        {{ vendorId: 0x045E, productId: 0x0B13 }},
+                        {{ vendorId: 0x045E, productId: 0x0B20 }},
+                        {{ vendorId: 0x045E, productId: 0x02FD }},
+                        {{ vendorId: 0x045E, productId: 0x02E0 }},
+                        {{ vendorId: 0x045E, productId: 0x0B12 }},
+                        {{ vendorId: 0x045E, productId: 0x02EA }},
+                    ]
                 }});
                 if (!devices.length) {{
                     log('No device selected', 'error');
@@ -900,13 +905,15 @@ class DJIVideoController:
                 hidDevice = devices[0];
                 if (!hidDevice.opened) await hidDevice.open();
 
+                controllerType = (hidDevice.vendorId === 0x054C) ? 'dualsense' : 'xbox';
+                const ctrlName = hidDevice.productName || (controllerType === 'dualsense' ? 'DualSense' : 'Xbox Controller');
                 btn.textContent = 'Gamepad: ON';
                 btn.classList.add('on');
-                statusEl.textContent = hidDevice.productName || 'DualSense';
+                statusEl.textContent = ctrlName;
                 lastGamepadDir = 'none';
-                lastBtnCross = false;
-                lastBtnTriangle = false;
-                log('DualSense connected via WebHID: ' + (hidDevice.productName || 'HID'), 'sent');
+                lastBtnAction1 = false;
+                lastBtnAction2 = false;
+                log(ctrlName + ' connected via WebHID', 'sent');
 
                 hidDevice.addEventListener('inputreport', handleHIDReport);
             }} catch(e) {{
@@ -915,28 +922,13 @@ class DJIVideoController:
         }}
 
         function handleHIDReport(event) {{
-            const {{ data, reportId }} = event;
+            if (controllerType === 'dualsense') handleDualSenseReport(event);
+            else if (controllerType === 'xbox') handleXboxReport(event);
+        }}
+
+        function updateStickUI(dir, x, y) {{
             const statusEl = document.getElementById('gamepad-status');
-
-            let offset = 0;
-            if (reportId === 0x31) {{
-                offset = 1;
-            }} else if (reportId !== 0x01) {{
-                return;
-            }}
-
-            const rawX = data.getUint8(offset);
-            const rawY = data.getUint8(offset + 1);
-            const x = (2 * rawX / 255) - 1.0;
-            const y = (2 * rawY / 255) - 1.0;
-
             statusEl.textContent = 'X:' + x.toFixed(2) + ' Y:' + y.toFixed(2);
-
-            let dir = 'none';
-            if (y < -0.5) dir = 'up';
-            else if (x < -0.5) dir = 'left';
-            else if (x > 0.5) dir = 'right';
-
             if (dir !== lastGamepadDir) {{
                 lastGamepadDir = dir;
                 sendControlData(dir);
@@ -946,26 +938,68 @@ class DJIVideoController:
                     if (b) b.classList.toggle('active', d === dir);
                 }});
             }}
+        }}
 
-            const buttons0 = data.getUint8(offset + 7);
-            const crossPressed = !!(buttons0 & 0x20);
-            const trianglePressed = !!(buttons0 & 0x80);
-
-            if (crossPressed && !lastBtnCross) {{
+        function handleActionButtons(btn1Pressed, btn1Label, btn2Pressed, btn2Label) {{
+            if (btn1Pressed && !lastBtnAction1) {{
                 sendControlData('down');
-                log('Gamepad: U-Turn (Cross)', 'sent');
+                log('Gamepad: U-Turn (' + btn1Label + ')', 'sent');
             }}
-            lastBtnCross = crossPressed;
+            lastBtnAction1 = btn1Pressed;
 
-            if (trianglePressed && !lastBtnTriangle) {{
+            if (btn2Pressed && !lastBtnAction2) {{
                 fetch('/go-home', {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }}
                 }}).then(r => r.json()).then(() => {{
-                    log('Gamepad: Go Home (Triangle)', 'sent');
+                    log('Gamepad: Go Home (' + btn2Label + ')', 'sent');
                 }}).catch(() => {{}});
             }}
-            lastBtnTriangle = trianglePressed;
+            lastBtnAction2 = btn2Pressed;
+        }}
+
+        function handleDualSenseReport(event) {{
+            const {{ data, reportId }} = event;
+            let offset = 0;
+            if (reportId === 0x31) offset = 1;
+            else if (reportId !== 0x01) return;
+
+            const rawX = data.getUint8(offset);
+            const rawY = data.getUint8(offset + 1);
+            const x = (2 * rawX / 255) - 1.0;
+            const y = (2 * rawY / 255) - 1.0;
+
+            let dir = 'none';
+            if (y < -0.5) dir = 'up';
+            else if (x < -0.5) dir = 'left';
+            else if (x > 0.5) dir = 'right';
+            updateStickUI(dir, x, y);
+
+            const buttons0 = data.getUint8(offset + 7);
+            handleActionButtons(!!(buttons0 & 0x20), 'Cross', !!(buttons0 & 0x80), 'Triangle');
+        }}
+
+        function handleXboxReport(event) {{
+            const {{ data, reportId }} = event;
+            if (reportId !== 0x01 || data.byteLength < 12) return;
+
+            const rawX = data.getUint16(0, true);
+            const rawY = data.getUint16(2, true);
+            const x = (rawX - 32768) / 32768;
+            const y = (rawY - 32768) / 32768;
+
+            let dir = 'none';
+            if (y < -0.5) dir = 'up';
+            else if (x < -0.5) dir = 'left';
+            else if (x > 0.5) dir = 'right';
+            updateStickUI(dir, x, y);
+
+            if (data.byteLength >= 14) {{
+                const btnRaw = data.getUint16(11, true);
+                const aPressed = !!((btnRaw >> 4) & 1);
+                const yPressed = !!((btnRaw >> 7) & 1);
+                handleActionButtons(aPressed, 'A', yPressed, 'Y');
+            }}
         }}
 
         async function connect() {{
