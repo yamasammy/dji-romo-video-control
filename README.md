@@ -4,7 +4,7 @@ Live video streaming and remote control for DJI Romo robot vacuums, directly fro
 
 Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a PS5 DualSense / Xbox controller via WebHID.
 
-![Python](https://img.shields.io/badge/python-3.8+-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.10+-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
@@ -18,9 +18,8 @@ Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a
 
 ## Prerequisites
 
-1. **Python 3.8+**
-2. **Agora Python SDK**
-3. A `.env` file with your DJI Home credentials (see below)
+1. **[uv](https://docs.astral.sh/uv/)** (recommended) or Python 3.10+
+2. A `.env` file with your DJI Home credentials (see below)
 
 ## Step 1: Generate your credentials
 
@@ -35,13 +34,6 @@ Follow its instructions to get your `DJI_USER_TOKEN` and `DJI_DEVICE_SN`, then c
 ```bash
 git clone https://github.com/yamasammy/dji-romo-video-control.git
 cd dji-romo-video-control
-
-pip install requests agora-python-sdk
-```
-
-Copy the template and fill in your credentials:
-
-```bash
 cp .env.template .env
 ```
 
@@ -52,11 +44,25 @@ DJI_USER_TOKEN=your_member_token_here
 DJI_DEVICE_SN=your_robot_serial_number_here
 ```
 
+No manual `pip install` needed -- dependencies are declared inline in the script and resolved automatically by `uv`.
+
 ## Step 3: Run
 
 ```bash
+uv run dji_video_control.py
+```
+
+`uv` will automatically install the required dependencies (`requests`, `agora-python-server-sdk`) on first run. The Agora native SDK (~200 MB) is also downloaded automatically on the first launch.
+
+<details>
+<summary>Alternative: without uv</summary>
+
+```bash
+pip install requests agora-python-server-sdk
 python3 dji_video_control.py
 ```
+
+</details>
 
 Your browser will open automatically at `http://127.0.0.1:8765/` with the video viewer.
 
