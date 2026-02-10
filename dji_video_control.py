@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "requests",
+#     "agora-python-server-sdk",
+# ]
+# ///
 """
 DJI Romo - Video Stream & Robot Control
 
@@ -6,12 +13,10 @@ Standalone script for live video + joystick/gamepad control of DJI Romo robot va
 Controls: keyboard (ZQSD/arrows), on-screen buttons, PS5 DualSense or Xbox controller (WebHID).
 
 Usage:
-    python3 dji_video_control.py
+    uv run dji_video_control.py
 
 Requires:
     - .env file with DJI_USER_TOKEN and DJI_DEVICE_SN
-    - Agora Python SDK (pip install agora-python-sdk)
-    - requests (pip install requests)
 """
 
 import json
