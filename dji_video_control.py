@@ -34,9 +34,14 @@ try:
     from agora.rtc.local_user_observer import IRTCLocalUserObserver
     AGORA_SDK_AVAILABLE = True
 except ImportError:
-    AGORA_SDK_AVAILABLE = False
-    print("Error: Agora Python SDK required. Install with: pip install agora-python-sdk")
-    sys.exit(1)
+    print("Agora SDK not found, installing agora_python_server_sdk...")
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "agora_python_server_sdk==2.4.3"])
+    from agora.rtc.agora_service import AgoraService, AgoraServiceConfig, RTCConnConfig, RtcConnectionPublishConfig
+    from agora.rtc.rtc_connection import RTCConnection
+    from agora.rtc.rtc_connection_observer import IRTCConnectionObserver
+    from agora.rtc.local_user_observer import IRTCLocalUserObserver
+    AGORA_SDK_AVAILABLE = True
 
 
 class Colors:
