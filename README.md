@@ -4,6 +4,8 @@ Live video streaming and remote control for DJI Romo robot vacuums, directly fro
 
 Control your robot with keyboard (ZQSD/arrows), on-screen joystick buttons, or a PS5 DualSense / Xbox controller via WebHID.
 
+This tool bypass the pin code setup on DJI home app.
+
 ![Python](https://img.shields.io/badge/python-3.8+-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
