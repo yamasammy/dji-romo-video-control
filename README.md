@@ -1,5 +1,3 @@
-# (DJI PATCHED THE TRICK)
-
 # DJI Romo - Video Stream & Robot Control
 
 Live video streaming and remote control for DJI Romo robot vacuums, directly from your browser.
